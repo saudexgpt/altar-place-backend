@@ -31,7 +31,17 @@ class SocialAuthController extends Controller
     {
         $this->ensureProviderIsSupported($provider);
 
-        $redirectUri = $request->query('redirect_uri', rtrim((string) config('app.frontend_url'), '/').'/oauth-callback');
+        $defaultRedirectUri = rtrim((string) config('app.frontend_url'), '/').'/oauth-callback';
+        $redirectUri = $request->query('redirect_uri', $defaultRedirectUri);
+
+        // The bridge token minted in callback() below is a real, usable
+        // Sanctum token appended to this URL — accepting an arbitrary
+        // caller-supplied host here would let anyone craft a link that
+        // hands a victim's token to an attacker-controlled domain. Only our
+        // own frontend host is allowed to receive it.
+        if (parse_url($redirectUri, PHP_URL_HOST) !== parse_url($defaultRedirectUri, PHP_URL_HOST)) {
+            $redirectUri = $defaultRedirectUri;
+        }
 
         $state = Str::random(40);
         Cache::put("oauth_redirect:{$state}", $redirectUri, now()->addMinutes(10));
