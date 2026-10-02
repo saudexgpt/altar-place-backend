@@ -53,7 +53,7 @@
         </label>
 
         <div>
-          <label class="block text-xs text-ink-muted mb-1">Audio file (mp3, wav, m4a, ogg, aac — max 50MB)</label>
+          <label class="block text-xs text-ink-muted mb-1">Audio file (mp3, wav, m4a, ogg, aac — max 200MB)</label>
           <input type="file" accept="audio/*" required class="text-sm" @change="audio = $event.target.files?.[0] ?? null" />
         </div>
 

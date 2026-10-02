@@ -33,7 +33,10 @@ class UploadTrackRequest extends FormRequest
             'is_explicit' => ['nullable', 'boolean'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
-            'audio' => ['required', 'file', 'mimes:mp3,wav,m4a,ogg,aac', 'max:51200'],
+            // 200MB — long-form sermons/podcasts can comfortably run past an
+            // hour at a reasonable bitrate; matches docker/nginx.conf and
+            // docker/php.ini's upload limits.
+            'audio' => ['required', 'file', 'mimes:mp3,wav,m4a,ogg,aac', 'max:204800'],
             'cover' => ['nullable', 'image', 'max:4096'],
         ];
     }

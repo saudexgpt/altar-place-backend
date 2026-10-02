@@ -5,6 +5,7 @@ use App\Http\Middleware\TrackUserActivity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
@@ -43,5 +44,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('api', BlockDuringMaintenance::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Without this, exceeding post_max_size (e.g. a long sermon/podcast
+        // upload) surfaces as an uncaught PostTooLargeException — a raw
+        // Laravel exception trace in production — instead of a clean error
+        // the admin/creator upload forms already know how to display
+        // (they read response.data.message).
+        $exceptions->render(function (PostTooLargeException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'This upload is too large. Please use a smaller file.',
+                ], 413);
+            }
+        });
     })->create();
