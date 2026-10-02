@@ -31,15 +31,28 @@ class SocialAuthController extends Controller
     {
         $this->ensureProviderIsSupported($provider);
 
-        $defaultRedirectUri = rtrim((string) config('app.frontend_url'), '/').'/oauth-callback';
+        // app.url (not app.frontend_url) is the safe fallback — it's the
+        // domain this whole app runs on, so it's always correctly set in
+        // production, unlike FRONTEND_URL which defaults to a dev value
+        // (localhost:8100) when left unconfigured.
+        $defaultRedirectUri = rtrim((string) config('app.url'), '/').'/oauth-callback';
         $redirectUri = $request->query('redirect_uri', $defaultRedirectUri);
 
         // The bridge token minted in callback() below is a real, usable
         // Sanctum token appended to this URL — accepting an arbitrary
         // caller-supplied host here would let anyone craft a link that
-        // hands a victim's token to an attacker-controlled domain. Only our
-        // own frontend host is allowed to receive it.
-        if (parse_url($redirectUri, PHP_URL_HOST) !== parse_url($defaultRedirectUri, PHP_URL_HOST)) {
+        // hands a victim's token to an attacker-controlled domain. Allowed
+        // hosts are our own web app (app.url) and, if explicitly configured,
+        // a separate mobile deep-link host (app.frontend_url) — not just the
+        // latter, since it defaults to a dev value (localhost:8100) when
+        // FRONTEND_URL isn't set, which would otherwise make every redirect
+        // silently fall back to that unreachable default in production.
+        $allowedHosts = array_filter(array_unique([
+            parse_url((string) config('app.url'), PHP_URL_HOST),
+            parse_url((string) config('app.frontend_url'), PHP_URL_HOST),
+        ]));
+
+        if (! in_array(parse_url($redirectUri, PHP_URL_HOST), $allowedHosts, true)) {
             $redirectUri = $defaultRedirectUri;
         }
 
