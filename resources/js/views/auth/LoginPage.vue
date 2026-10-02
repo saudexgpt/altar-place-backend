@@ -57,9 +57,9 @@
       <button type="button" class="w-full flex items-center justify-center gap-2 border border-navy-500/60 rounded-full py-2.5 text-sm hover:bg-navy-800 transition-colors" @click="socialLogin('google')">
         <img src="/images/google-icon.svg" class="w-4 h-4" alt="" /> Continue with Google
       </button>
-      <button type="button" class="w-full flex items-center justify-center gap-2 border border-navy-500/60 rounded-full py-2.5 text-sm hover:bg-navy-800 transition-colors" @click="socialLogin('facebook')">
+      <!-- <button type="button" class="w-full flex items-center justify-center gap-2 border border-navy-500/60 rounded-full py-2.5 text-sm hover:bg-navy-800 transition-colors" @click="socialLogin('facebook')">
         <img src="/images/facebook-icon.svg" class="w-4 h-4" alt="" /> Continue with Facebook
-      </button>
+      </button> -->
     </form>
   </AuthSplitLayout>
 </template>
