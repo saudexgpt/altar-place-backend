@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\Admin\AdminModerationController;
 use App\Http\Controllers\Api\Admin\AdminPlatformSettingsController;
+use App\Http\Controllers\Api\Admin\AdminTrackController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
 use App\Http\Controllers\Api\AdsController;
 use App\Http\Controllers\Api\AdvertiserController;
@@ -205,6 +206,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::put('/users/{user}/roles', [AdminUserController::class, 'updateRoles']);
 
         Route::get('/tracks', [AdminModerationController::class, 'tracks']);
+        // Staff-published resource (music or Word content) — credited to
+        // Artist::official() rather than requiring a personal creator
+        // profile. Surfaces to every listener via the same catalog/
+        // discovery endpoints as a creator upload.
+        Route::post('/tracks', [AdminTrackController::class, 'store']);
         // Reuses CreatorTrackController::update — TrackPolicy already grants
         // access to anyone with the moderate-content permission, not just
         // the owning creator.

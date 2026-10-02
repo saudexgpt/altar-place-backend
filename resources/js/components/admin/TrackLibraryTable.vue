@@ -3,6 +3,9 @@
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
       <h1 class="text-2xl font-heading font-semibold">{{ title }}</h1>
       <div class="flex items-center gap-3">
+        <button type="button" class="text-sm font-semibold bg-gold text-navy-950 rounded-full px-4 py-2 hover:bg-gold-tint transition-colors" @click="isUploading = true">
+          Upload
+        </button>
         <select v-model="status" class="bg-navy-800 border border-navy-500/60 rounded-full text-xs px-3 py-2 focus:outline-none" @change="reload">
           <option value="">All statuses</option>
           <option value="approved">Approved</option>
@@ -105,6 +108,13 @@
       @close="editingTrackId = null"
       @saved="handleTrackSaved"
     />
+
+    <TrackUploadModal
+      v-if="isUploading"
+      :type-options="props.type.split(',')"
+      @close="isUploading = false"
+      @uploaded="handleTrackUploaded"
+    />
   </div>
 </template>
 
@@ -117,12 +127,15 @@ import Badge from '@/components/ui/Badge.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import Pagination from '@/components/ui/Pagination.vue';
 import TrackEditModal from '@/components/admin/TrackEditModal.vue';
+import TrackUploadModal from '@/components/admin/TrackUploadModal.vue';
 import LoadError from '@/components/ui/LoadError.vue';
 
 const props = defineProps({
   title: { type: String, required: true },
   type: { type: String, required: true }, // 'music' or 'sermon,podcast' (Word Library)
 });
+
+const isUploading = ref(false);
 
 const player = usePlayerStore();
 const tracks = ref([]);
@@ -214,6 +227,11 @@ function replaceTrack(updated) {
 function handleTrackSaved(updated) {
   replaceTrack(updated);
   editingTrackId.value = null;
+}
+
+function handleTrackUploaded(created) {
+  tracks.value.unshift(created);
+  isUploading.value = false;
 }
 
 async function approve(track) {

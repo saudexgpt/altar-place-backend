@@ -52,7 +52,14 @@
       </div>
     </div>
 
-    <div class="hidden sm:flex items-center gap-2 w-1/3 justify-end">
+    <div class="hidden sm:flex items-center gap-3 w-1/3 justify-end">
+      <RouterLink
+        :to="{ name: 'listener.comments', params: { id: player.currentTrack.id } }"
+        class="text-ink-muted hover:text-white"
+        aria-label="View comments"
+      >
+        <MessageCircle :size="16" />
+      </RouterLink>
       <Volume2 :size="16" class="text-ink-muted" />
       <input
         type="range"
@@ -68,7 +75,7 @@
 </template>
 
 <script setup>
-import { Music, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2 } from '@lucide/vue';
+import { Music, Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2, MessageCircle } from '@lucide/vue';
 import { usePlayerStore } from '@/stores/player';
 
 const player = usePlayerStore();

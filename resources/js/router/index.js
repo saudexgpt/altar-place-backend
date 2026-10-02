@@ -59,6 +59,12 @@ export const routes = [
       { path: '/search', name: 'listener.search', component: () => import('@/views/listener/SearchPage.vue') },
       { path: '/library', name: 'listener.library', component: () => import('@/views/listener/LibraryPage.vue') },
       { path: '/profile', name: 'listener.profile', component: () => import('@/views/listener/ProfilePage.vue') },
+      { path: '/artists/:id', name: 'listener.artist', component: () => import('@/views/listener/ArtistPage.vue') },
+      { path: '/albums/:id', name: 'listener.album', component: () => import('@/views/listener/AlbumPage.vue') },
+      { path: '/following', name: 'listener.following', component: () => import('@/views/listener/FollowingPage.vue') },
+      { path: '/activity', name: 'listener.activity', component: () => import('@/views/listener/ActivityPage.vue') },
+      { path: '/notifications', name: 'listener.notifications', component: () => import('@/views/listener/NotificationsPage.vue') },
+      { path: '/tracks/:id/comments', name: 'listener.comments', component: () => import('@/views/listener/CommentsPage.vue') },
     ],
   },
   {

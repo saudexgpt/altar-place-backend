@@ -50,6 +50,18 @@
       </form>
     </div>
 
+    <!-- Following / Activity -->
+    <div class="bg-navy-800 border border-navy-500/40 rounded-2xl divide-y divide-navy-500/40 overflow-hidden">
+      <RouterLink :to="{ name: 'listener.following' }" class="flex items-center justify-between px-6 py-4 hover:bg-navy-700/50 transition-colors">
+        <span class="flex items-center gap-3 text-sm font-medium"><Users :size="18" class="text-ink-muted" /> Following</span>
+        <ChevronRight :size="16" class="text-ink-muted" />
+      </RouterLink>
+      <RouterLink :to="{ name: 'listener.activity' }" class="flex items-center justify-between px-6 py-4 hover:bg-navy-700/50 transition-colors">
+        <span class="flex items-center gap-3 text-sm font-medium"><History :size="18" class="text-ink-muted" /> My Activity</span>
+        <ChevronRight :size="16" class="text-ink-muted" />
+      </RouterLink>
+    </div>
+
     <!-- Password -->
     <div class="bg-navy-800 border border-navy-500/40 rounded-2xl p-6">
       <h2 class="font-heading font-semibold mb-4">Change Password</h2>
@@ -119,7 +131,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Camera } from '@lucide/vue';
+import { Camera, ChevronRight, History, Users } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { profileApi } from '@/services/profileApi';
 import SubscriptionSection from '@/components/listener/SubscriptionSection.vue';

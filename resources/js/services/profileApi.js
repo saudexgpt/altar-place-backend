@@ -20,4 +20,8 @@ export const profileApi = {
   async updateNotificationPreferences(payload) {
     return (await api.put('/profile/notification-preferences', payload)).data.data;
   },
+
+  async following() {
+    return (await api.get('/profile/following')).data;
+  },
 };

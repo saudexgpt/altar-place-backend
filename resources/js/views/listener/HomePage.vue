@@ -2,17 +2,25 @@
   <div>
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
       <h1 class="text-2xl font-heading font-semibold">Home</h1>
-      <div class="flex gap-2">
-        <button
-          v-for="pill in categoryPills"
-          :key="pill.value"
-          type="button"
-          class="text-xs font-semibold px-4 py-2 rounded-full transition-colors"
-          :class="category === pill.value ? 'bg-gold text-navy-950' : 'bg-navy-800 text-ink-muted hover:bg-navy-700'"
-          @click="category = pill.value"
-        >
-          {{ pill.label }}
-        </button>
+      <div class="flex items-center gap-3">
+        <div class="flex gap-2">
+          <button
+            v-for="pill in categoryPills"
+            :key="pill.value"
+            type="button"
+            class="text-xs font-semibold px-4 py-2 rounded-full transition-colors"
+            :class="category === pill.value ? 'bg-gold text-navy-950' : 'bg-navy-800 text-ink-muted hover:bg-navy-700'"
+            @click="category = pill.value"
+          >
+            {{ pill.label }}
+          </button>
+        </div>
+        <RouterLink :to="{ name: 'listener.notifications' }" class="relative text-ink-muted hover:text-white" aria-label="Notifications">
+          <Bell :size="20" />
+          <span v-if="notifications.unreadCount > 0" class="absolute -top-1 -right-1 bg-gold text-navy-950 text-[10px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+            {{ notifications.unreadCount }}
+          </span>
+        </RouterLink>
       </div>
     </div>
 
@@ -68,8 +76,10 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { Bell } from '@lucide/vue';
 import { catalogApi } from '@/services/catalogApi';
 import { usePlayerStore } from '@/stores/player';
+import { useNotificationsStore } from '@/stores/notifications';
 import HomeSection from '@/components/listener/HomeSection.vue';
 import TrackCard from '@/components/listener/TrackCard.vue';
 import ArtistCard from '@/components/listener/ArtistCard.vue';
@@ -77,6 +87,7 @@ import PlaylistCard from '@/components/listener/PlaylistCard.vue';
 
 const router = useRouter();
 const player = usePlayerStore();
+const notifications = useNotificationsStore();
 
 const categoryPills = [
   { value: null, label: 'All' },
@@ -126,7 +137,7 @@ function playFrom(list, track) {
 }
 
 function goToArtist(artist) {
-  router.push({ name: 'listener.search', query: { q: artist.name, type: 'artist' } });
+  router.push({ name: 'listener.artist', params: { id: artist.id } });
 }
 
 function goToPlaylist(playlist) {
@@ -164,5 +175,10 @@ function reloadCategorySections() {
 }
 
 watch(category, reloadCategorySections);
-onMounted(loadEverything);
+onMounted(() => {
+  loadEverything();
+  // Best-effort — a failed unread count just leaves the bell showing no
+  // badge rather than blocking the rest of the home feed from loading.
+  notifications.refresh().catch(() => {});
+});
 </script>

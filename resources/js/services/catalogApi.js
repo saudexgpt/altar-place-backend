@@ -54,6 +54,22 @@ export const catalogApi = {
     return unwrap(await api.get(`/tracks/${id}`));
   },
 
+  async artist(id) {
+    return unwrap(await api.get(`/artists/${id}`));
+  },
+
+  async artistTracks(id) {
+    return unwrap(await api.get(`/artists/${id}/tracks`));
+  },
+
+  async similarArtists(id) {
+    return unwrap(await api.get(`/artists/${id}/similar`));
+  },
+
+  async album(id) {
+    return unwrap(await api.get(`/albums/${id}`));
+  },
+
   async genres() {
     return unwrap(await api.get('/genres'));
   },

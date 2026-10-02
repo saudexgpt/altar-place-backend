@@ -58,6 +58,22 @@ export const adminApi = {
     return paginated(await api.get('/admin/tracks', { params }));
   },
 
+  async uploadTrack(payload) {
+    const form = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      if (Array.isArray(value)) {
+        value.forEach((item) => form.append(`${key}[]`, item));
+        return;
+      }
+      form.append(key, value);
+    });
+
+    return (await api.post('/admin/tracks', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })).data.data;
+  },
+
   async approveTrack(id) {
     return (await api.post(`/admin/tracks/${id}/approve`)).data.track;
   },
