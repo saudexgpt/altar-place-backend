@@ -48,6 +48,11 @@ RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cac
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# Matches docker/php.ini's upload_tmp_dir — guarantees PHP has a writable
+# place to buffer multipart uploads regardless of the base image's own /tmp
+# permissions.
+RUN mkdir -p /tmp/php-uploads && chown www-data:www-data /tmp/php-uploads && chmod 1777 /tmp/php-uploads
+
 COPY docker/nginx.conf /etc/nginx/sites-enabled/default
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

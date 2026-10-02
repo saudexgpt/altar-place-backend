@@ -4,6 +4,9 @@ namespace App\Http\Requests\Api;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Validator;
 
 class UploadTrackRequest extends FormRequest
 {
@@ -13,6 +16,28 @@ class UploadTrackRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * The 'file' rule's "failed to upload" message hides PHP's actual
+     * UPLOAD_ERR_* code, which is the only way to tell a real size/temp-dir/
+     * disk problem on the server apart from, e.g., a genuinely malformed
+     * request — logged here so a failure is diagnosable from the app logs
+     * alone, without needing shell access to the production container.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $audio = $this->file('audio');
+
+            if ($audio instanceof UploadedFile && ! $audio->isValid()) {
+                Log::warning('Track upload rejected: audio file failed PHP upload check', [
+                    'error_code' => $audio->getError(),
+                    'error_message' => $audio->getErrorMessage(),
+                    'user_id' => $this->user()?->id,
+                ]);
+            }
+        });
     }
 
     /**
