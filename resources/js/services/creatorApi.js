@@ -38,18 +38,18 @@ export const creatorApi = {
     return paginated(await api.get('/creator/tracks', { params }));
   },
 
+  // No explicit Content-Type on any of these: the browser must compute its
+  // own (with the multipart boundary) for a FormData body. Setting one
+  // overrides that with a boundary-less header, which makes PHP unable to
+  // parse any field or file out of the request at all.
   async uploadTrack(payload) {
-    return unwrap(await api.post('/creator/tracks', toFormData(payload), {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }));
+    return unwrap(await api.post('/creator/tracks', toFormData(payload)));
   },
 
   async updateTrack(id, payload) {
     const form = toFormData(payload);
     form.append('_method', 'PUT');
-    return unwrap(await api.post(`/creator/tracks/${id}`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }));
+    return unwrap(await api.post(`/creator/tracks/${id}`, form));
   },
 
   async deleteTrack(id) {
@@ -61,17 +61,13 @@ export const creatorApi = {
   },
 
   async createAlbum(payload) {
-    return unwrap(await api.post('/creator/albums', toFormData(payload), {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }));
+    return unwrap(await api.post('/creator/albums', toFormData(payload)));
   },
 
   async updateAlbum(id, payload) {
     const form = toFormData(payload);
     form.append('_method', 'PUT');
-    return unwrap(await api.post(`/creator/albums/${id}`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }));
+    return unwrap(await api.post(`/creator/albums/${id}`, form));
   },
 
   async deleteAlbum(id) {

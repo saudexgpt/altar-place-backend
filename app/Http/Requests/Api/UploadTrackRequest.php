@@ -19,24 +19,32 @@ class UploadTrackRequest extends FormRequest
     }
 
     /**
-     * The 'file' rule's "failed to upload" message hides PHP's actual
-     * UPLOAD_ERR_* code, which is the only way to tell a real size/temp-dir/
-     * disk problem on the server apart from, e.g., a genuinely malformed
-     * request — logged here so a failure is diagnosable from the app logs
-     * alone, without needing shell access to the production container.
+     * The 'file' rule's "failed to upload" message hides *why* — it fails
+     * identically whether PHP rejected a real upload (size/temp-dir/disk) or
+     * no file arrived under this field name at all (a request-construction
+     * bug). Logs enough to tell those apart from the app logs alone, without
+     * shell access to the production container.
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if (! $validator->errors()->has('audio')) {
+                return;
+            }
+
             $audio = $this->file('audio');
 
-            if ($audio instanceof UploadedFile && ! $audio->isValid()) {
-                Log::warning('Track upload rejected: audio file failed PHP upload check', [
-                    'error_code' => $audio->getError(),
-                    'error_message' => $audio->getErrorMessage(),
-                    'user_id' => $this->user()?->id,
-                ]);
-            }
+            Log::warning('Track upload rejected: audio field failed validation', [
+                'has_file' => $this->hasFile('audio'),
+                'file_value_type' => get_debug_type($audio),
+                'is_uploaded_file_instance' => $audio instanceof UploadedFile,
+                'php_error_code' => $audio instanceof UploadedFile ? $audio->getError() : null,
+                'php_error_message' => $audio instanceof UploadedFile ? $audio->getErrorMessage() : null,
+                'content_type_header' => $this->header('Content-Type'),
+                'content_length_header' => $this->header('Content-Length'),
+                'non_file_input_keys' => array_keys($this->except(['audio', 'cover'])),
+                'user_id' => $this->user()?->id,
+            ]);
         });
     }
 

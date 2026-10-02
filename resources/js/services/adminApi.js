@@ -69,9 +69,11 @@ export const adminApi = {
       form.append(key, value);
     });
 
-    return (await api.post('/admin/tracks', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })).data.data;
+    // No explicit Content-Type: the browser must compute its own (with the
+    // multipart boundary) when sending a FormData body. Setting one here
+    // overrides that with a boundary-less header, which makes PHP unable to
+    // parse any field or file out of the request at all.
+    return (await api.post('/admin/tracks', form)).data.data;
   },
 
   async approveTrack(id) {
@@ -90,9 +92,7 @@ export const adminApi = {
     });
     form.append('_method', 'PUT');
 
-    return (await api.post(`/admin/tracks/${id}`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })).data.data;
+    return (await api.post(`/admin/tracks/${id}`, form)).data.data;
   },
 
   async reports(params = {}) {
