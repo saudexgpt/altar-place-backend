@@ -34,7 +34,10 @@ class UploadTrackRequest extends FormRequest
 
             $audio = $this->file('audio');
 
-            Log::warning('Track upload rejected: audio field failed validation', [
+            // error, not warning: production's LOG_LEVEL=error (see
+            // .env.production.example) would otherwise drop this below the
+            // configured threshold and silently discard it.
+            Log::error('Track upload rejected: audio field failed validation', [
                 'has_file' => $this->hasFile('audio'),
                 'file_value_type' => get_debug_type($audio),
                 'is_uploaded_file_instance' => $audio instanceof UploadedFile,
