@@ -16,6 +16,11 @@ export const routes = [
     props: () => ({ message: maintenanceMessage.value }),
   },
   {
+    path: '/privacy-policy',
+    name: 'privacy-policy',
+    component: () => import('@/views/marketing/PrivacyPolicyPage.vue'),
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('@/views/auth/LoginPage.vue'),
@@ -136,7 +141,7 @@ const router = createRouter({
 // backend. Everything else a non-staff visitor could reach (landing, the
 // listener SPA) shows the maintenance page instead, since their API calls
 // would just fail with a 503 anyway.
-const ALWAYS_ALLOWED_DURING_MAINTENANCE = ['login', 'register', 'forgot-password', 'reset-password', 'oauth-callback', 'maintenance'];
+const ALWAYS_ALLOWED_DURING_MAINTENANCE = ['login', 'register', 'forgot-password', 'reset-password', 'oauth-callback', 'maintenance', 'privacy-policy'];
 
 // Exported (rather than inlined into router.beforeEach) so it can be unit
 // tested against a lightweight router built from stubbed components,

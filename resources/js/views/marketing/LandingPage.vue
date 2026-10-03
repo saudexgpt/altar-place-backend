@@ -121,7 +121,8 @@
     </section>
 
     <footer class="border-t border-navy-500/30 py-8 pb-28 text-center text-xs text-ink-muted">
-      © {{ new Date().getFullYear() }} AltarPlace. All rights reserved.
+      <p>© {{ new Date().getFullYear() }} AltarPlace. All rights reserved.</p>
+      <RouterLink :to="{ name: 'privacy-policy' }" class="hover:text-ink underline">Privacy Policy</RouterLink>
     </footer>
   </div>
 </template>
