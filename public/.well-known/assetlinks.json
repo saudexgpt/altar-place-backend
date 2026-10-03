@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.saudexgpt.altarplace",
       "sha256_cert_fingerprints": [
-        "FA:84:FF:F2:72:B3:42:A3:DD:D3:B4:1E:D0:D3:36:02:65:16:BF:B3:0B:97:35:F3:CA:4E:05:1D:01:85:FE:BD"
+        "FA:84:FF:F2:72:B3:42:A3:DD:D3:B4:1E:D0:D3:36:02:65:16:BF:B3:0B:97:35:F3:CA:4E:05:1D:01:85:FE:BD",
+        "22:37:C3:BA:89:F2:57:26:63:91:08:53:8A:85:95:83:DA:63:F2:26:88:8B:B1:9D:A6:5A:D3:01:44:14:9F:13"
       ]
     }
   }
