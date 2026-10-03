@@ -1,6 +1,13 @@
 # Deploying to DigitalOcean App Platform
 
-This is a click-through walkthrough for the DO dashboard — no `doctl`/API automation, matching how this repo is set up. Everything here reads from the `Dockerfile` + `docker/` folder in this directory (`backend-laravel/`), since App Platform builds this component from that image rather than auto-detecting a PHP buildpack (a buildpack wouldn't include `ffmpeg`).
+This is a click-through walkthrough for the DO dashboard — no `doctl`/API automation, matching how this repo is set up.
+
+**Correction (verified against real build logs, 2026-10-03):** this app is NOT actually built from the `Dockerfile`/`docker/` folder, despite those files existing and an earlier version of this doc claiming otherwise. DigitalOcean App Platform auto-detects this as a plain PHP app and builds it with its Heroku-style Cloud Native Buildpack (`heroku-php-apache2`) — the build log shows `NOTICE: No Procfile, using 'web: heroku-php-apache2'` and `heroku/php`/`heroku/nodejs` buildpack layers, not a Docker build. This means, and has always meant:
+- `docker/nginx.conf`, `docker/php.ini`, `docker/entrypoint.sh`, `docker/supervisord.conf` are **not used** — PHP settings are instead read from the root-level `php.ini` file (Heroku buildpack convention), and process types from the root-level `Procfile`.
+- `ffmpeg` is **not installed** on the live container (it's only present in the unused Dockerfile's base image) — audio transcoding (`TranscodeAudioJob`) likely fails or falls back silently in production. Not yet fixed; needs a decision on whether to add an apt-buildpack layer for `ffmpeg` or switch to the Dockerfile properly.
+- The queue worker and scheduler now run via separate Worker components (step 5a below) reading the `Procfile`'s `worker`/`scheduler` process types, since supervisord (which used to run them) was never actually in play either.
+
+If you ever do want the Dockerfile to be what's actually running (bundles `ffmpeg`, one container instead of three billed components), that requires explicitly changing the component's build method in the DO dashboard — this doc currently documents the buildpack path since that's what's live.
 
 Do these roughly in order — later steps need values from earlier ones.
 
@@ -23,19 +30,28 @@ This one bucket holds both `public/...` (covers, avatars, ad creatives) and `aud
 ## 4. Create the App Platform app
 
 1. **Apps** → Create App → GitHub → select this repo/branch.
-2. When it asks how to build the component, choose **Dockerfile**, and set the **Source Directory** to `backend-laravel` (this is a monorepo — the mobile app lives alongside it and isn't part of this component).
-3. Set the **HTTP Port** to `8080` (matches `docker/nginx.conf`).
-4. Instance size: start on the smallest "Basic" instance; bump it up once you see real traffic.
+2. App Platform auto-detects this as a PHP app and builds it with its buildpack — set the **Source Directory** to `backend-laravel` (this is a monorepo — the mobile app lives alongside it and isn't part of this component). You don't need to pick "Dockerfile" here; the buildpack is what's actually in use (see the correction note above).
+3. Instance size: start on the smallest "Basic" instance; bump it up once you see real traffic.
 
 ## 5. Add a pre-deploy migration job
 
-Still in the app's component list, add a **Job** component (also built from the same Dockerfile / `backend-laravel` source directory), with:
-- **Run Command**: `sh docker/predeploy.sh`
+Still in the app's component list, add a **Job** component (same `backend-laravel` source directory, same buildpack), with:
+- **Run Command**: `php artisan migrate --force && php artisan db:seed --class=RolesAndPermissionsSeeder --force && php artisan db:seed --class=SubscriptionPlanSeeder --force`
 - **Trigger**: Pre-Deploy
 
-This runs once per deploy, before traffic shifts to the new version — safer than running migrations from the web container's entrypoint, which would race across multiple instances if you ever scale out. The script runs `migrate --force` and then seeds the roles/permissions and subscription plans (both idempotent, and both required — registration fails without the `listener` role). It deliberately does **not** run `DatabaseSeeder`, which creates demo accounts with known passwords.
+This runs once per deploy, before traffic shifts to the new version — safer than running migrations from the web component, which would race across multiple instances if you ever scale out. It seeds the roles/permissions and subscription plans (both idempotent, and both required — registration fails without the `listener` role). It deliberately does **not** run `DatabaseSeeder`, which creates demo accounts with known passwords.
 
-(`docker/entrypoint.sh` runs whatever command it's given and exits, instead of starting the web stack, so the Job terminates normally.)
+(`docker/predeploy.sh` runs the same commands but assumes the Dockerfile's shell environment — use the inline command above instead since the buildpack is what's actually live. If you have an existing Job component still pointed at `sh docker/predeploy.sh`, it's very likely been failing silently — check its logs.)
+
+## 5a. Add Worker components for the queue and scheduler
+
+The root-level `Procfile` defines `worker` (processes `ShouldQueue` notifications — new-report alerts, etc.) and `scheduler` (runs `schedule:run` every 60s — subscription auto-expiry) process types, matching what `docker/supervisord.conf` used to run inside the unused Dockerfile. App Platform needs two separate **Worker** components to actually run them:
+
+1. Add a **Worker** component, same source directory, buildpack. Under **Commands**, it should detect the `Procfile`'s `worker` process type — select it (or set the Run Command directly to the line from the `Procfile`).
+2. Repeat for `scheduler`.
+3. Give both the same environment variables as the web component (they need `DB_*`, `APP_KEY`, queue/cache config, etc.).
+
+Each Worker component is billed separately — the smallest instance size is fine for both.
 
 ## 6. Set environment variables
 
@@ -73,9 +89,9 @@ Genres are only created by the demo `CatalogSeeder`, so a fresh production datab
 
 - `curl https://yourdomain.com/up` → should return 200 (Laravel's built-in health check route).
 - Open `https://yourdomain.com` — the marketing page and `/login` should load, and after signing in the session should persist across a refresh (if not, re-check `SANCTUM_STATEFUL_DOMAINS`).
-- In the app's **Runtime Logs**, you should see three long-lived processes alongside nginx/php-fpm: `queue-worker` and `scheduler` (from `docker/supervisord.conf`). If notifications or subscription auto-expiry stop working, check here first.
+- Check the `worker` and `scheduler` Worker components' own Runtime Logs (each is a separate component now, not a process inside the web component) — if notifications or subscription auto-expiry stop working, check here first.
 - Upload a track through the app and confirm it shows up in the Spaces bucket under `audio/` — that's the real test that the storage config is wired correctly, not just that the app boots.
-- ffmpeg is now actually installed (it wasn't in local dev), so `transcoding_status` should progress from `pending` → `ready` a little while after upload instead of sitting on `failed`/direct-streaming fallback. Check the queue-worker logs if it doesn't.
+- `ffmpeg` is **not installed** under the buildpack (unlike local dev), so `transcoding_status` will likely sit on `failed` or fall back to direct streaming rather than progressing to `ready`. This is a known, currently-unfixed gap — see the correction note at the top of this doc.
 
 ## 10. Point the mobile app at production
 
